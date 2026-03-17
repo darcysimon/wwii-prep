@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WWII Exam Practice</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --text: #f0efe8;
+    --muted: #7a7a8a;
+    --accent: #e8b04a;
+    --accent2: #e85d3a;
+    --green: #4aba7a;
+    --red: #e85a5a;
+    --blue: #5aaae8;
+    --radius: 12px;
+    --glow: 0 0 20px rgba(232,176,74,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,176,74,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,176,74,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 24px 16px 80px; }
+
+  /* HEADER */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--accent); }
+  .logo span { color: var(--muted); font-size: 14px; font-family: 'DM Mono', monospace; display: block; letter-spacing: 1px; margin-top: -4px; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'DM Mono', monospace;
+  }
+  .stat-pill .icon { font-size: 14px; }
+  .stat-pill .val { color: var(--accent); font-weight: 500; }
+  .streak-fire { color: var(--accent2); }
+
+  /* XP BAR */
+  .xp-wrap { margin-bottom: 28px; }
+  .xp-label { font-size: 12px; color: var(--muted); font-family: 'DM Mono'; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .xp-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 3px; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  /* MODE SELECT */
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+  .mode-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  .mode-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--glow); }
+  .mode-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .mode-card:hover::before { opacity: 1; }
+  .mode-card .mode-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+  .mode-card .mode-name { font-family: 'Bebas Neue'; font-size: 20px; letter-spacing: 1px; color: var(--accent); margin-bottom: 4px; }
+  .mode-card .mode-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .mode-card .mode-pts { position: absolute; top: 12px; right: 14px; font-family: 'DM Mono'; font-size: 11px; color: var(--accent2); background: rgba(232,93,58,0.1); padding: 3px 8px; border-radius: 99px; border: 1px solid rgba(232,93,58,0.2); }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeUp 0.3s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  /* QUESTION */
+  .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .q-label { font-family: 'DM Mono'; font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .q-pts { font-family: 'DM Mono'; font-size: 12px; color: var(--accent); background: rgba(232,176,74,0.1); padding: 4px 10px; border-radius: 99px; border: 1px solid rgba(232,176,74,0.2); }
+
+  .q-text { font-size: 20px; font-weight: 500; line-height: 1.4; margin-bottom: 8px; }
+  .q-term { font-family: 'Bebas Neue'; font-size: 38px; letter-spacing: 2px; color: var(--accent); line-height: 1.1; }
+  .q-sub { font-size: 13px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  /* MULTIPLE CHOICE */
+  .mc-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .mc-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.5;
+    transition: all 0.15s;
+    text-align: left;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mc-option:hover:not(:disabled) { border-color: var(--accent); background: rgba(232,176,74,0.05); }
+  .mc-option.correct { border-color: var(--green); background: rgba(74,186,122,0.08); color: var(--green); }
+  .mc-option.wrong { border-color: var(--red); background: rgba(232,90,90,0.08); color: var(--red); }
+  .mc-option:disabled { cursor: default; }
+
+  /* FREE RESPONSE */
+  .free-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 120px;
+    margin-top: 16px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .free-input:focus { border-color: var(--accent); }
+  .free-input::placeholder { color: var(--muted); }
+
+  /* FLASHCARD */
+  .flashcard-wrap { perspective: 1000px; margin-bottom: 16px; cursor: pointer; }
+  .flashcard-inner {
+    width: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s; min-height: 200px;
+  }
+  .flashcard-inner.flipped { transform: rotateY(180deg); }
+  .fc-face {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 32px 28px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .fc-back { transform: rotateY(180deg); }
+  .fc-hint { font-family: 'DM Mono'; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 16px; }
+  .fc-term { font-family: 'Bebas Neue'; font-size: 44px; letter-spacing: 3px; color: var(--accent); }
+  .fc-def { font-size: 14px; line-height: 1.7; color: var(--text); }
+
+  /* GRADE BUTTONS */
+  .grade-row { display: flex; gap: 10px; margin-top: 8px; }
+  .btn-grade {
+    flex: 1; padding: 12px; border-radius: 10px; border: 1px solid;
+    font-family: 'DM Sans'; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-easy { border-color: var(--green); color: var(--green); background: rgba(74,186,122,0.08); }
+  .btn-easy:hover { background: rgba(74,186,122,0.18); }
+  .btn-hard { border-color: var(--accent2); color: var(--accent2); background: rgba(232,93,58,0.08); }
+  .btn-hard:hover { background: rgba(232,93,58,0.18); }
+
+  /* BUTTONS */
+  .btn {
+    padding: 13px 24px; border-radius: 10px; border: 1px solid var(--accent);
+    background: transparent; color: var(--accent);
+    font-family: 'DM Sans'; font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .btn:hover { background: var(--accent); color: var(--bg); }
+  .btn-primary { background: var(--accent); color: var(--bg); }
+  .btn-primary:hover { background: #f0c060; border-color: #f0c060; }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-back { border-color: var(--border); color: var(--muted); }
+  .btn-back:hover { background: var(--surface2); color: var(--text); }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* AI FEEDBACK */
+  .ai-feedback {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    display: none;
+  }
+  .ai-feedback.show { display: block; animation: fadeUp 0.3s ease; }
+  .ai-feedback .ai-label { font-family: 'DM Mono'; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 10px; }
+  .ai-feedback .score-badge {
+    display: inline-block; font-family: 'Bebas Neue'; font-size: 22px; letter-spacing: 1px;
+    padding: 2px 12px; border-radius: 6px; margin-bottom: 10px;
+  }
+  .score-a { background: rgba(74,186,122,0.15); color: var(--green); }
+  .score-b { background: rgba(90,170,232,0.15); color: var(--blue); }
+  .score-c { background: rgba(232,176,74,0.15); color: var(--accent); }
+  .score-d { background: rgba(232,90,90,0.15); color: var(--red); }
+  .loading-dots { display: inline-block; }
+  .loading-dots::after { content: '...'; animation: dots 1.2s steps(4, end) infinite; }
+  @keyframes dots { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
+
+  /* PROGRESS BAR (in-question) */
+  .q-progress { display: flex; gap: 4px; margin-bottom: 20px; }
+  .q-dot { height: 4px; flex: 1; border-radius: 2px; background: var(--surface2); transition: background 0.3s; }
+  .q-dot.done { background: var(--accent); }
+  .q-dot.current { background: var(--accent2); }
+
+  /* ESSAY */
+  .essay-prompt { font-size: 16px; line-height: 1.7; background: var(--surface2); padding: 20px; border-radius: 10px; border-left: 3px solid var(--accent); margin-bottom: 16px; }
+  .essay-tips { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .tip { font-size: 13px; color: var(--muted); padding: 10px 14px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); }
+  .tip strong { color: var(--text); }
+  .outline-field { margin-bottom: 12px; }
+  .outline-label { font-family: 'DM Mono'; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+
+  /* RESULT / SCORE SCREEN */
+  .result-hero { text-align: center; padding: 32px 0 24px; }
+  .result-grade { font-family: 'Bebas Neue'; font-size: 96px; letter-spacing: 4px; line-height: 1; background: linear-gradient(135deg, var(--accent2), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .result-label { font-size: 18px; color: var(--muted); margin-top: 8px; }
+  .result-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 24px 0; }
+  .result-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+  .result-stat .rs-val { font-family: 'Bebas Neue'; font-size: 36px; color: var(--accent); letter-spacing: 1px; }
+  .result-stat .rs-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--accent); border-radius: 99px;
+    padding: 10px 24px; font-size: 14px; font-weight: 500;
+    color: var(--accent); font-family: 'DM Mono';
+    z-index: 100; animation: toastIn 0.3s ease; pointer-events: none;
+    white-space: nowrap;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+  /* ESSAY MODE SELECT */
+  .essay-pick { display: flex; flex-direction: column; gap: 10px; }
+  .essay-option { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; cursor: pointer; transition: all 0.2s; text-align: left; color: var(--text); font-family: 'DM Sans'; font-size: 14px; line-height: 1.5; }
+  .essay-option:hover { border-color: var(--accent); background: rgba(232,176,74,0.04); }
+  .essay-option strong { color: var(--accent); font-family: 'DM Mono'; font-size: 11px; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+
+  /* STREAK BANNER */
+  .streak-banner {
+    background: linear-gradient(135deg, rgba(232,93,58,0.15), rgba(232,176,74,0.1));
+    border: 1px solid rgba(232,93,58,0.3);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; animation: fadeUp 0.3s ease;
+  }
+  .streak-banner .sb-fire { font-size: 28px; }
+  .streak-banner .sb-text { font-size: 14px; font-weight: 500; }
+  .streak-banner .sb-sub { font-size: 12px; color: var(--muted); }
+
+  /* HOME SCREEN TITLE */
+  .home-title { margin-bottom: 32px; }
+  .home-title h1 { font-family: 'Bebas Neue'; font-size: 52px; letter-spacing: 3px; line-height: 1; }
+  .home-title h1 span { color: var(--accent); }
+  .home-title p { color: var(--muted); font-size: 14px; margin-top: 8px; line-height: 1.6; }
+
+  /* ID GRID */
+  .id-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .id-field { }
+  .id-field.full { grid-column: 1 / -1; }
+  .id-label { font-family: 'DM Mono'; font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+  .id-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; color: var(--text); font-family: 'DM Sans'; font-size: 13px;
+    outline: none; transition: border-color 0.2s; resize: vertical;
+  }
+  .id-input:focus { border-color: var(--accent); }
+  textarea.id-input { min-height: 80px; }
+
+  .mode-card-full { grid-column: 1 / -1; }
+
+  /* NAME ENTRY MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; animation: fadeUp 0.2s ease;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: var(--surface); border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 32px 28px;
+    width: 90%; max-width: 400px; text-align: center;
+    box-shadow: 0 0 40px rgba(232,176,74,0.15);
+  }
+  .modal-box h2 { font-family: 'Bebas Neue'; font-size: 32px; letter-spacing: 2px; color: var(--accent); margin-bottom: 8px; }
+  .modal-box p { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .modal-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; color: var(--text);
+    font-family: 'DM Sans'; font-size: 16px; outline: none;
+    text-align: center; margin-bottom: 12px; letter-spacing: 1px;
+    transition: border-color 0.2s;
+  }
+  .modal-input:focus { border-color: var(--accent); }
+
+  /* LEADERBOARD */
+  .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .lb-title { font-family: 'Bebas Neue'; font-size: 36px; letter-spacing: 2px; color: var(--accent); }
+  .lb-subtitle { font-size: 12px; color: var(--muted); font-family: 'DM Mono'; }
+  .lb-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .lb-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .lb-row.me { border-color: var(--accent); background: rgba(232,176,74,0.04); }
+  .lb-rank { font-family: 'Bebas Neue'; font-size: 22px; min-width: 32px; text-align: center; }
+  .lb-rank.gold { color: #FFD700; }
+  .lb-rank.silver { color: #C0C0C0; }
+  .lb-rank.bronze { color: #CD7F32; }
+  .lb-rank.other { color: var(--muted); }
+  .lb-info { flex: 1; }
+  .lb-name { font-size: 15px; font-weight: 500; }
+  .lb-name.me-name { color: var(--accent); }
+  .lb-meta { font-size: 12px; color: var(--muted); font-family: 'DM Mono'; margin-top: 2px; }
+  .lb-xp { font-family: 'Bebas Neue'; font-size: 24px; color: var(--accent); letter-spacing: 1px; }
+  .lb-xp-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono'; text-align: right; }
+  .lb-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+  .lb-loading { text-align: center; padding: 32px; color: var(--muted); font-family: 'DM Mono'; font-size: 13px; }
+  .lb-medals { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .lb-medal-pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 99px; padding: 6px 14px; font-size: 12px; font-family: 'DM Mono';
+    display: flex; align-items: center; gap: 6px;
+  }
+  .lb-refresh { font-family: 'DM Mono'; font-size: 11px; color: var(--muted); cursor: pointer; border: 1px solid var(--border); background: none; border-radius: 6px; padding: 4px 10px; color: var(--muted); transition: color 0.2s; }
+  .lb-refresh:hover { color: var(--text); }
+  .lb-post-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .lb-post-info { flex: 1; font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .lb-post-info strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- NAME ENTRY MODAL -->
+  <div class="modal-overlay" id="name-modal">
+    <div class="modal-box">
+      <h2>ENTER YOUR NAME</h2>
+      <p>Your name will appear on the shared leaderboard so your friends can see your score in real time.</p>
+      <input class="modal-input" id="player-name-input" type="text" maxlength="20" placeholder="YOUR NAME" autocomplete="off">
+      <button class="btn btn-primary" style="width:100%" onclick="saveName()">Let's Go →</button>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">WWII PREP<span>UNIT 7 · EXAM MODE</span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-sm" onclick="showScreen('screen-leaderboard');loadLeaderboard()" style="border-color:var(--accent2);color:var(--accent2)">🏆 Board</button>
+      <button class="btn btn-sm btn-back" onclick="goHome()" id="back-btn" style="display:none">← Home</button>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-pill"><span class="icon">⭐</span>XP <span class="val" id="xp-display">0</span></div>
+    <div class="stat-pill"><span class="icon streak-fire">🔥</span>Streak <span class="val" id="streak-display">0</span></div>
+    <div class="stat-pill"><span class="icon">✓</span>Correct <span class="val" id="correct-display">0</span></div>
+    <div class="stat-pill"><span class="icon">🏅</span>Level <span class="val" id="level-display">1</span></div>
+  </div>
+
+  <!-- XP BAR -->
+  <div class="xp-wrap">
+    <div class="xp-label"><span id="level-label">LEVEL 1</span><span id="xp-to-next">0 / 100 XP</span></div>
+    <div class="xp-track"><div class="xp-fill" id="xp-bar" style="width:0%"></div></div>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div class="screen active" id="screen-home">
+    <div class="home-title">
+      <h1>CHOOSE YOUR <span>BATTLE</span></h1>
+      <p>4 days until the exam. Every correct answer builds your streak. Aim for 100 XP per session.</p>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card" onclick="startMode('flashcard')">
+        <span class="mode-pts">+10 XP</span>
+        <span class="mode-icon">🃏</span>
+        <div class="mode-name">Flashcards</div>
+        <div class="mode-desc">Flip through all 25 key terms. Rate yourself on each.</div>
+      </div>
+      <div class="mode-card" onclick="startMode('mc')">
+        <span class="mode-pts">+20 XP</span>
+        <span class="mode-icon">🎯</span>
+        <div class="mode-name">Multiple Choice</div>
+        <div class="mode-desc">4 options, 1 right answer. Instant feedback with explanations.</div>
+      </div>
+      <div class="mode-card" onclick="startMode('id')">
+        <span class="mode-pts">+50 XP</span>
+        <span class="mode-icon">📝</span>
+        <div class="mode-name">Term ID Practice</div>
+        <div class="mode-desc">Write who/what/when/where + significance. AI grades your answer.</div>
+      </div>
+      <div class="mode-card" onclick="startMode('essay')">
+        <span class="mode-pts">+100 XP</span>
+        <span class="mode-icon">✍️</span>
+        <div class="mode-name">Essay Prep</div>
+        <div class="mode-desc">Practice all 5 prompts. Build thesis + outlines. AI gives feedback.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLASHCARD SCREEN -->
+  <div class="screen" id="screen-flashcard">
+    <div id="fc-progress" class="q-progress"></div>
+    <div class="flashcard-wrap" onclick="flipCard()" id="fc-wrap">
+      <div class="flashcard-inner" id="fc-inner">
+        <div class="fc-face fc-front">
+          <div class="fc-hint">TAP TO FLIP</div>
+          <div class="fc-term" id="fc-term-text"></div>
+        </div>
+        <div class="fc-face fc-back">
+          <div class="fc-hint">DEFINITION</div>
+          <div class="fc-def" id="fc-def-text"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grade-row" id="fc-grade-row" style="display:none">
+      <button class="btn-grade btn-easy" onclick="gradeFlash('easy')">✓ Got it (+10 XP)</button>
+      <button class="btn-grade btn-hard" onclick="gradeFlash('hard')">↺ Still learning</button>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-sm btn-back" onclick="goHome()">← Back</button>
+      <span style="font-family:'DM Mono';font-size:12px;color:var(--muted);align-self:center" id="fc-counter"></span>
+    </div>
+  </div>
+
+  <!-- MULTIPLE CHOICE SCREEN -->
+  <div class="screen" id="screen-mc">
+    <div id="mc-progress" class="q-progress"></div>
+    <div class="card">
+      <div class="q-header">
+        <span class="q-label" id="mc-label">MULTIPLE CHOICE</span>
+        <span class="q-pts">+20 XP</span>
+      </div>
+      <div class="q-text" id="mc-question"></div>
+      <div class="mc-options" id="mc-options"></div>
+    </div>
+    <div class="ai-feedback" id="mc-feedback">
+      <div class="ai-label">EXPLANATION</div>
+      <div id="mc-explain"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sm btn-back" onclick="goHome()">← Back</button>
+      <button class="btn btn-sm btn-primary" id="mc-next-btn" onclick="nextMC()" style="display:none">Next Question →</button>
+    </div>
+  </div>
+
+  <!-- TERM ID SCREEN -->
+  <div class="screen" id="screen-id">
+    <div class="card">
+      <div class="q-header">
+        <span class="q-label">TERM IDENTIFICATION</span>
+        <span class="q-pts">+50 XP</span>
+      </div>
+      <div class="q-term" id="id-term"></div>
+      <div class="q-sub">Define this term using all five components. The exam will ask for three of five terms — treat each one as exam practice.</div>
+    </div>
+    <div class="id-grid">
+      <div class="id-field">
+        <div class="id-label">WHO</div>
+        <textarea class="id-input" id="id-who" rows="2" placeholder="Key people, nations, groups involved..."></textarea>
+      </div>
+      <div class="id-field">
+        <div class="id-label">WHAT</div>
+        <textarea class="id-input" id="id-what" rows="2" placeholder="What was this? What happened?"></textarea>
+      </div>
+      <div class="id-field">
+        <div class="id-label">WHEN</div>
+        <input class="id-input" id="id-when" type="text" placeholder="Date or time period...">
+      </div>
+      <div class="id-field">
+        <div class="id-label">WHERE</div>
+        <input class="id-input" id="id-where" type="text" placeholder="Location(s)...">
+      </div>
+      <div class="id-field full">
+        <div class="id-label">WHY IT MATTERS (SIGNIFICANCE)</div>
+        <textarea class="id-input" id="id-sig" rows="3" placeholder="This is worth the most points. Explain the historical impact — what did this lead to? Why do historians care about it?"></textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sm btn-back" onclick="goHome()">← Back</button>
+      <button class="btn btn-sm btn-primary" onclick="submitID()" id="id-submit-btn">Submit for AI Grading →</button>
+    </div>
+    <div class="ai-feedback" id="id-feedback">
+      <div class="ai-label">AI GRADER FEEDBACK</div>
+      <div id="id-score-badge" class="score-badge"></div>
+      <div id="id-feedback-text"></div>
+    </div>
+    <div class="btn-row" id="id-next-row" style="display:none">
+      <button class="btn btn-sm btn-primary" onclick="nextID()">Try Another Term →</button>
+    </div>
+  </div>
+
+  <!-- ESSAY SCREEN - PICK PROMPT -->
+  <div class="screen" id="screen-essay-pick">
+    <div class="card" style="margin-bottom:16px">
+      <div class="q-header"><span class="q-label">ESSAY PREP</span><span class="q-pts">+100 XP</span></div>
+      <div class="q-text">Choose a prompt to practice. The exam gives you 2 of these 5 — prepare for at least 4.</div>
+    </div>
+    <div class="essay-pick" id="essay-options-list"></div>
+    <div class="btn-row"><button class="btn btn-sm btn-back" onclick="goHome()">← Back</button></div>
+  </div>
+
+  <!-- ESSAY SCREEN - WRITE -->
+  <div class="screen" id="screen-essay-write">
+    <div class="essay-prompt" id="essay-prompt-text"></div>
+    <div class="essay-tips">
+      <div class="tip"><strong>Thesis first:</strong> One sentence that makes a specific, arguable claim.</div>
+      <div class="tip"><strong>3 body paragraphs:</strong> Each needs a claim + specific evidence (a key term or event).</div>
+      <div class="tip"><strong>Target:</strong> ~400–500 words in 35 minutes. That's ~12 words/min — very doable.</div>
+    </div>
+    <div class="outline-field">
+      <div class="id-label">YOUR THESIS STATEMENT</div>
+      <textarea class="id-input" id="essay-thesis" rows="3" placeholder="Write a clear, arguable thesis. Avoid 'In this essay I will...' — just make the argument directly."></textarea>
+    </div>
+    <div class="outline-field">
+      <div class="id-label">BODY PARAGRAPH 1 — CLAIM + EVIDENCE</div>
+      <textarea class="id-input" id="essay-p1" rows="3" placeholder="Topic sentence + 1-2 specific pieces of evidence (key terms, events, dates)..."></textarea>
+    </div>
+    <div class="outline-field">
+      <div class="id-label">BODY PARAGRAPH 2 — CLAIM + EVIDENCE</div>
+      <textarea class="id-input" id="essay-p2" rows="3" placeholder="Topic sentence + 1-2 specific pieces of evidence..."></textarea>
+    </div>
+    <div class="outline-field">
+      <div class="id-label">BODY PARAGRAPH 3 — CLAIM + EVIDENCE</div>
+      <textarea class="id-input" id="essay-p3" rows="3" placeholder="Topic sentence + 1-2 specific pieces of evidence..."></textarea>
+    </div>
+    <div class="outline-field">
+      <div class="id-label">CONCLUSION / BROADER SIGNIFICANCE</div>
+      <textarea class="id-input" id="essay-conc" rows="2" placeholder="Restate thesis, zoom out — what does this tell us about history?"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sm btn-back" onclick="startMode('essay')">← Prompts</button>
+      <button class="btn btn-sm btn-primary" onclick="submitEssay()" id="essay-submit-btn">Get AI Feedback →</button>
+    </div>
+    <div class="ai-feedback" id="essay-feedback">
+      <div class="ai-label">AI ESSAY COACH</div>
+      <div id="essay-score-badge" class="score-badge"></div>
+      <div id="essay-feedback-text"></div>
+    </div>
+    <div class="btn-row" id="essay-next-row" style="display:none">
+      <button class="btn btn-sm btn-primary" onclick="startMode('essay')">Practice Another Prompt →</button>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD SCREEN -->
+  <div class="screen" id="screen-leaderboard">
+    <div class="lb-header">
+      <div>
+        <div class="lb-title">🏆 LEADERBOARD</div>
+        <div class="lb-subtitle">LIVE · SHARED WITH YOUR CLASS</div>
+      </div>
+      <button class="lb-refresh" onclick="loadLeaderboard()">↻ Refresh</button>
+    </div>
+    <div id="lb-post-section" style="display:none" class="lb-post-row">
+      <div style="font-size:24px">📤</div>
+      <div class="lb-post-info">
+        <strong id="lb-post-name"></strong>
+        Post your current score to the leaderboard
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="postScore()">Post Score</button>
+    </div>
+    <div id="lb-content">
+      <div class="lb-loading">Loading scores<span class="loading-dots"></span></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-sm btn-back" onclick="goHome()">← Home</button>
+      <button class="btn btn-sm" onclick="postScore()" style="border-color:var(--green);color:var(--green)">📤 Update My Score</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let xp = 0, streak = 0, correct = 0, level = 1;
+const XP_PER_LEVEL = 100;
+let playerName = localStorage.getItem('wwii_player_name') || '';
+
+// ── NAME MODAL ─────────────────────────────────────────────────────────────────
+function showNameModal() {
+  document.getElementById('name-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('player-name-input').focus(), 100);
+}
+function saveName() {
+  const val = document.getElementById('player-name-input').value.trim();
+  if (!val) { toast('Enter your name!'); return; }
+  playerName = val;
+  localStorage.setItem('wwii_player_name', val);
+  document.getElementById('name-modal').classList.add('hidden');
+  toast('Welcome, ' + val + '! 🎮');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('player-name-input');
+  if (inp) inp.addEventListener('keydown', e => { if(e.key==='Enter') saveName(); });
+  if (!playerName) showNameModal();
+  else document.getElementById('name-modal').classList.add('hidden');
+});
+
+// ── LEADERBOARD ────────────────────────────────────────────────────────────────
+async function postScore() {
+  if (!playerName) { showNameModal(); return; }
+  const key = 'lb:' + playerName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  const entry = JSON.stringify({ name: playerName, xp, level, correct, streak, updated: Date.now() });
+  try {
+    await window.storage.set(key, entry, true);
+    toast('📤 Score posted to leaderboard!');
+    if (document.getElementById('screen-leaderboard').classList.contains('active')) loadLeaderboard();
+  } catch(e) { toast('Could not post — try again'); }
+}
+
+async function loadLeaderboard() {
+  const el = document.getElementById('lb-content');
+  el.innerHTML = '<div class="lb-loading">Loading scores<span class="loading-dots"></span></div>';
+  const postSec = document.getElementById('lb-post-section');
+  if (playerName) {
+    document.getElementById('lb-post-name').textContent = playerName + ' · ' + xp + ' XP';
+    postSec.style.display = 'flex';
+  }
+  try {
+    const keys = await window.storage.list('lb:', true);
+    if (!keys || !keys.keys || keys.keys.length === 0) {
+      el.innerHTML = '<div class="lb-empty">No scores yet — be the first!<br><br>Earn some XP then hit <strong>📤 Update My Score</strong>.</div>';
+      return;
+    }
+    const entries = [];
+    for (const k of keys.keys) {
+      try { const r = await window.storage.get(k, true); if (r) entries.push(JSON.parse(r.value)); } catch(e) {}
+    }
+    entries.sort((a,b) => (b.xp||0) - (a.xp||0));
+    const medals = ['🥇','🥈','🥉'];
+    const mClass = ['gold','silver','bronze'];
+    let html = '<div class="lb-list">';
+    entries.forEach((e,i) => {
+      const isMe = playerName && e.name.toLowerCase().replace(/[^a-z0-9]/g,'_') === playerName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+      const rankDisp = i < 3 ? medals[i] : (i+1);
+      const rc = i < 3 ? mClass[i] : 'other';
+      html += `<div class="lb-row${isMe?' me':''}">
+        <div class="lb-rank ${rc}">${rankDisp}</div>
+        <div class="lb-info">
+          <div class="lb-name${isMe?' me-name':''}">${escHtml(e.name)}${isMe?' (you)':''}</div>
+          <div class="lb-meta">Lv.${e.level||1} · ${e.correct||0} correct · ${timeAgo(e.updated)}</div>
+        </div>
+        <div style="text-align:right"><div class="lb-xp">${e.xp||0}</div><div class="lb-xp-label">XP</div></div>
+      </div>`;
+    });
+    html += '</div>';
+    const myRank = entries.findIndex(e => e.name.toLowerCase().replace(/[^a-z0-9]/g,'_') === (playerName||'').toLowerCase().replace(/[^a-z0-9]/g,'_'));
+    html += `<div style="font-size:12px;color:var(--muted);font-family:'DM Mono';text-align:center;margin-top:8px">${entries.length} student${entries.length>1?'s':''} on the board${myRank>=0?' · you\'re #'+(myRank+1):''}</div>`;
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div class="lb-empty">Leaderboard requires the app to be hosted online (e.g. GitHub Pages).<br>Everything else works offline!</div>';
+  }
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function timeAgo(ts) {
+  if (!ts) return '';
+  const s = Math.floor((Date.now()-ts)/1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60)+'m ago';
+  if (s < 86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+// ── DATA ───────────────────────────────────────────────────────────────────────
+const terms = [
+  {term:"Treaty of Versailles",who:"Allied powers (Britain, France, US) imposed terms on Germany; Italy, Japan, Russia dissatisfied",what:"Peace treaty ending WWI. War Guilt Clause forced Germany to accept blame, pay ~$600B reparations, shrink military, lose territory",when:"Signed June 28, 1919",where:"Versailles, France",sig:"Created economic devastation and national humiliation in Germany that fueled hyperinflation, resentment, the rise of fascism, and ultimately WWII. Classic argument: its failures caused the next war.",def:"1919 peace treaty ending WWI imposing harsh penalties on Germany — War Guilt Clause, massive reparations, military limits, territory losses. Fueled resentment that led to WWII."},
+  {term:"Dawes Plan",who:"US (Dawes), Germany, France, Britain",what:"Restructured German war debt. US loaned money to Germany → Germany paid France/Britain reparations → they repaid US war debts. A circular debt cycle.",when:"1924 (Young Plan updated it in 1929)",where:"International/Europe",sig:"Temporarily stabilized Germany and Europe but created a fragile, interconnected debt system. When the US banking system collapsed in 1929, the whole cycle broke, deepening the Great Depression globally.",def:"1924 US plan restructuring German debt through an international loan cycle. Stabilized Germany short-term but left economies dangerously interconnected — when the US collapsed in 1929, Europe followed."},
+  {term:"Great Depression",who:"US banking system collapsed first; global spread affected all major powers",what:"Global economic catastrophe triggered by the 1929 stock market crash. Caused by speculation, wealth inequality, over-extension of credit, bank failures.",when:"1929 (crash) through late 1930s",where:"United States first, then worldwide",sig:"Destabilized democratic governments worldwide, creating desperation that made radical ideologies (fascism, communism) appealing. Directly enabled Hitler's rise and Japan's expansionism. The economic accelerant for WWII.",def:"Global economic collapse starting with 1929 US stock crash. Bank failures, mass unemployment, and trade wars spread misery worldwide — creating conditions that fueled fascism and WWII."},
+  {term:"Hyperinflation",who:"German government and citizens",what:"Extreme currency devaluation when Germany printed massive money to cover debts. A loaf of bread went from 0.5 marks to 200 million marks by 1923.",when:"Early 1920s, peak 1923",where:"Germany (Weimar Republic)",sig:"Wiped out German middle-class savings, destroyed economic stability, and created deep humiliation and desperation — making the German population vulnerable to extremist promises of restoration.",def:"Germany's extreme 1923 currency collapse from printing money to pay WWI debts. Made the mark worthless, devastated ordinary Germans, and fueled the resentment Hitler exploited."},
+  {term:"Kellogg-Briand Pact",who:"Over 60 nations signed, including US, Germany, France",what:"International agreement renouncing war as an instrument of national policy. Nations pledged to resolve disputes through diplomacy.",when:"Late 1920s (1928)",where:"Paris, international",sig:"Completely ineffective — had no enforcement mechanism, just like the League of Nations. Demonstrated the limits of idealistic diplomacy without enforcement. Germany violated it completely within a decade.",def:"1928 international pact renouncing war, signed by 60+ nations. Lacked any enforcement mechanism and proved useless — a lesson that agreements without teeth cannot prevent aggression."},
+  {term:"Fascism",who:"Mussolini (Italy, 1922), Hitler/Nazism (Germany, 1933)",what:"Authoritarian, ultra-nationalist ideology: dictatorial rule, suppression of opposition, militarism, expansionism, racial superiority, anti-communism.",when:"Emerged early 1920s; peaked 1930s-40s",where:"Italy, Germany primarily; influenced Spain and others",sig:"Provided ideological justification for WWII aggression. Nazi racial ideology led directly to the Holocaust. The fascist vs. communist clash shaped WWII alliances and laid groundwork for the Cold War.",def:"Authoritarian ultra-nationalist ideology characterized by dictatorial rule, militarism, expansionism, and racial hierarchy. Mussolini invented it; Hitler weaponized it. Directly caused WWII and the Holocaust."},
+  {term:"Communism",who:"Lenin then Stalin (Soviet Union); Mao Zedong (China)",what:"Political-economic ideology: collective ownership, abolition of private property, centralized state planning, classless society as ultimate goal.",when:"Russian Revolution 1917; Five-Year Plans 1928+",where:"Soviet Union, China",sig:"Created an ideological alternative to capitalism that attracted followers during the Depression. The US fear of communism shaped WWII alliances and directly caused the Cold War. Fascism partly rose as a reaction to communist threat.",def:"Ideology of collective ownership and centralized planning. The USSR's Five-Year Plans industrialized rapidly while capitalism collapsed, attracting global attention and terrifying Western powers into alliances with fascists."},
+  {term:"Five Year Plans",who:"Stalin, Soviet state",what:"Soviet economic programs for rapid forced industrialization through centralized state planning, collectivized agriculture, and state-owned production.",when:"Starting 1928",where:"Soviet Union",sig:"Rapidly industrialized the USSR and gave it the industrial capacity to eventually defeat Nazi Germany. But caused millions to die from forced collectivization. Also attracted Western leftists disillusioned with capitalism during the Depression.",def:"Stalin's centralized industrialization programs that rapidly built Soviet military-industrial capacity, enabling the USSR to absorb and eventually defeat the Nazi invasion — at enormous human cost."},
+  {term:"Eugenics",who:"Scientists, politicians; most infamously Nazi Germany under Hitler",what:"Pseudoscientific ideology claiming genetic 'improvement' of humanity through selective breeding and elimination of 'inferior' traits or races.",when:"Late 19th century origins; Nazi application 1933-1945",where:"Germany (most extreme), but practiced in US, UK too",sig:"Provided the pseudo-scientific justification for Nazi racial laws, the persecution of Jews, and ultimately the Holocaust. Demonstrates how scientific language can be weaponized to justify atrocities.",def:"Pseudoscience of racial 'improvement' used by Nazis to justify Aryan supremacy, the Nuremberg Laws, and the Holocaust. A warning about how scientific-sounding ideology can legitimize mass murder."},
+  {term:"Greater East Asia Co-Prosperity Sphere",who:"Imperial Japan; affected China, Korea, SE Asia",what:"Japanese imperial ideology claiming to liberate Asia from Western colonialism while establishing Japanese economic and political dominance across the region.",when:"Formalized 1940s, roots in 1930s expansion",where:"East and Southeast Asia",sig:"Justified Japan's aggressive expansion (annexation of Korea/Taiwan/Manchuria, war in China). Parallels European fascist expansionism. Japan's resource needs — especially oil — were central, leading directly to Pearl Harbor.",def:"Japan's imperial ideology disguising expansionist conquest as 'Asian liberation.' Justified annexing Korea, Manchuria, and invading China — and eventually the resource desperation that led to Pearl Harbor."},
+  {term:"Appeasement",who:"Britain (PM Chamberlain) and France toward Hitler",what:"Policy of making concessions to an aggressor to avoid war. Britain/France allowed remilitarization of Rhineland, Anschluss (Austria annexation), and Sudetenland takeover.",when:"1935-1938, culminating in Munich Agreement 1938",where:"European diplomatic circles; Central Europe",sig:"Catastrophically failed — emboldened Hitler, who took all of Czechoslovakia then invaded Poland anyway. Established the historical lesson that conceding to aggressors escalates rather than prevents conflict.",def:"Britain and France's failed policy of conceding to Hitler's demands to avoid war. The 1938 Munich Agreement gave him the Sudetenland — he took the rest of Czechoslovakia anyway, then started WWII."},
+  {term:"Nanjing Massacre",who:"Imperial Japanese Army vs Chinese soldiers and civilians",what:"Six-week campaign of mass murder, mass rape, and atrocities by Japanese forces against Nanjing's residents after capturing China's capital.",when:"December 1937 – March 1938",where:"Nanjing (Nanking), China",sig:"Foreshadowed the extreme civilian targeting that defined WWII (Holocaust, firebombing, atomic bombs). Still a major diplomatic issue between Japan and China. Shows the moral collapse that occurs in total war.",def:"Japanese army's six-week massacre of 100,000-300,000 Chinese civilians and POWs in Nanjing (Dec 1937). Foreshadowed WWII's extreme civilian casualties; remains a contentious Japan-China diplomatic issue."},
+  {term:"Molotov-Ribbentrop Pact",who:"Nazi Germany (Foreign Minister Ribbentrop) and Soviet Union (FM Molotov)",what:"Non-aggression pact with a secret protocol dividing Eastern Europe — Poland split between them; Soviets got Baltic States sphere of influence.",when:"August 23, 1939",where:"Moscow, Soviet Union",sig:"Enabled Germany to invade Poland without Soviet interference, starting WWII. Shocked the world given Nazi-Soviet ideological hatred. Fueled permanent Western distrust of the Soviets — a key Cold War root.",def:"Aug 1939 Nazi-Soviet non-aggression deal with secret protocol to divide Poland. Shocking given their ideological hatred. Enabled Germany's invasion of Poland (Sept 1939), starting WWII — and planted Cold War distrust."},
+  {term:"Blitzkrieg",who:"Nazi Germany; Wehrmacht and Luftwaffe",what:"'Lightning war' military doctrine: rapid coordinated air strikes + armored divisions to disorient, penetrate, and encircle enemies before they can respond.",when:"First used Sept 1939 (Poland); May 1940 (France)",where:"Poland, France, Low Countries; later Soviet Union",sig:"Revolutionized modern warfare. Caused the shockingly rapid fall of France (6 weeks). Forced all nations to rebuild military doctrine. Less effective in the vast Soviet Union — overextension helped doom Germany.",def:"Germany's 'lightning war' tactic combining air power and armored columns to overwhelm enemies before they could react. Conquered Poland in weeks and France in 6 weeks — until it met Russian winters and distances."},
+  {term:"Battle of Britain",who:"German Luftwaffe vs. British Royal Air Force (RAF)",what:"Sustained aerial campaign to destroy British air defenses as precondition for Operation Sea Lion (German invasion of Britain).",when:"July–October 1940",where:"Skies over Britain, especially southern England and London",sig:"Germany's first major defeat. Prevented invasion of Britain, keeping it as a base for later Allied operations. Hitler's strategic mistake of bombing civilians (Blitz) instead of RAF airfields let Britain recover. Showed Germany was beatable.",def:"1940 air battle where the RAF defeated the Luftwaffe, preventing Germany's planned invasion. Britain's radar advantage, codebreaking, and home territory helped. Germany's first defeat — proved it wasn't invincible."},
+  {term:"Operation Torch",who:"US and British forces; Eisenhower commanding",what:"Allied invasion of North Africa (Morocco, Algeria) — first major US combat operation of WWII, aimed at securing the Mediterranean and threatening Italy.",when:"November 1942",where:"North Africa (Morocco, Algeria, Tunisia)",sig:"Got the US into the war but frustrated Stalin — he wanted a real second front in France to divert Germans from the Eastern Front. Stalin's resentment over the delay in opening a Western Front became a seed of Cold War tension.",def:"Nov 1942 Allied invasion of North Africa — America's first major WWII operation. Strategically limited but symbolically important. Stalin's fury at not getting a real European second front planted seeds of Cold War distrust."},
+  {term:"Operation Barbarossa",who:"Nazi Germany invaded the Soviet Union; Stalin's Red Army defending",what:"Largest ground invasion in history. Three German army groups attacked simultaneously across a 1,800-mile front, aiming to destroy the USSR in months.",when:"June 1941 – February 1943 (effective end at Stalingrad)",where:"Soviet Union (Eastern Front)",sig:"Hitler's fatal overreach. The Russian winter, Soviet scorched-earth tactics, and Stalingrad turned the tide. The Eastern Front killed more people than any other theater — 25 million Soviet deaths. Created the conditions for Cold War.",def:"June 1941 German invasion of USSR — history's largest ground war. Initial German success stalled at winter and Stalingrad. 25 million Soviet deaths shaped Stalin's postwar demand for buffer zones, fueling the Cold War."},
+  {term:"Pearl Harbor",who:"Imperial Japanese Navy attacked US Pacific Fleet",what:"Surprise air attack on US naval base in Hawaii, targeting battleships, airfields, and military installations. ~2,400 Americans killed.",when:"December 7, 1941",where:"Pearl Harbor, Oahu, Hawaii, USA",sig:"Brought the United States into WWII — transforming it from a industrial supplier to a full combatant. Crucially, Japanese planes missed US aircraft carriers (at sea), oil storage, and shipyards, limiting the strategic damage.",def:"Japan's Dec 7, 1941 surprise attack killing ~2,400 Americans and destroying the US Pacific Fleet's battleships — but missing carriers, oil, and shipyards. Immediately brought the US into WWII."},
+  {term:"Holocaust",who:"Nazi Germany and collaborators targeted Jews, Roma, disabled people, political opponents, Soviet POWs",what:"Systematic state-sponsored genocide of 6 million Jews plus millions of others using ghettos, deportations, and industrial-scale extermination camps.",when:"1933 (persecution begins) to 1945 (liberation of camps)",where:"German-occupied Europe; main death camps in occupied Poland",sig:"Established 'crimes against humanity' as a legal concept; led to Nuremberg Trials; motivated creation of Israel; permanent warning about unchecked state power, propaganda, and racial ideology.",def:"Nazi Germany's systematic genocide of 6 million Jews and millions more. Used Nuremberg Laws, ghettos, and death camps like Auschwitz. Established 'crimes against humanity' and permanently shaped international law and Jewish identity."},
+  {term:"Second Front",who:"Stalin (demanding it); Churchill and Roosevelt (delaying it)",what:"Stalin's repeated demand for a major Allied invasion of Western Europe to force Germany to divide its forces. Allies opened North Africa/Italy instead; true second front came with D-Day 1944.",when:"Demanded 1942; opened June 6, 1944",where:"Western Europe (eventually Normandy, France)",sig:"Stalin's conviction that the West let the Soviets 'bleed' for two years — absorbing 25 million deaths — while the Allies fought secondary campaigns. This deep resentment was a major psychological root of the Cold War.",def:"Stalin's demand for an Allied invasion of Western Europe to split German forces. Allies delayed 2 years (North Africa, Italy first). Stalin believed the West let Soviets die alone — a key Cold War grievance."},
+  {term:"Battle of Midway",who:"US Navy vs Imperial Japanese Navy",what:"Decisive naval battle where the US, having broken Japanese codes, ambushed the Japanese fleet and sank 4 irreplaceable aircraft carriers.",when:"June 1942",where:"Midway Atoll, central Pacific Ocean",sig:"The turning point of the Pacific War. Japan lost its offensive naval capability and never recovered. US began island-hopping campaign toward Japan. Demonstrated the decisive importance of intelligence and aircraft carriers over battleships.",def:"June 1942 naval battle where code-breaking let the US ambush Japan and sink 4 aircraft carriers. The Pacific War's turning point — Japan never regained offensive capability; US began its island-hopping advance."},
+  {term:"Operation Overlord",who:"Allied forces (US, UK, Canada, others) commanded by General Eisenhower vs German forces",what:"Largest amphibious invasion in history. 156,000 troops landed on 5 Normandy beaches, supported by 11,000 aircraft and extensive deception operations.",when:"June 6, 1944 (D-Day)",where:"Normandy coast, France",sig:"Opened the long-delayed Western Front, forcing Germany into a two-front war it couldn't sustain. Accelerated Germany's collapse. But the 2-year delay contributed to Soviet mistrust and Cold War tensions.",def:"June 6, 1944 Allied invasion of Normandy — history's largest amphibious assault. Opened the Western Front at last, accelerating Germany's defeat but also confirming Stalin's belief that the West had delayed helping the USSR."},
+  {term:"Atomic Bomb",who:"US (Manhattan Project); targeted Japanese cities",what:"Revolutionary nuclear weapons dropped on Hiroshima (Aug 6) and Nagasaki (Aug 9), 1945, killing 200,000+ people and forcing Japan's surrender.",when:"Dropped August 6 and 9, 1945",where:"Hiroshima and Nagasaki, Japan",sig:"Ended WWII; established US as sole nuclear power (until 1949 when Soviets tested their own); initiated nuclear arms race and doctrine of Mutually Assured Destruction (MAD); fundamentally changed geopolitics and warfare.",def:"Two nuclear bombs ending WWII — Hiroshima (Aug 6) and Nagasaki (Aug 9) 1945. Killed 200,000+, forced Japanese surrender, launched the nuclear age, and triggered the Soviet-US arms race that defined the Cold War."},
+  {term:"Yalta Conference",who:"FDR (US), Churchill (UK), Stalin (USSR) — the 'Big Three'",what:"Final wartime summit addressing post-war order: dividing Germany into occupation zones, addressing Poland, Soviet entry into Pacific war, founding of the UN.",when:"February 1945",where:"Yalta, Crimea, Soviet Union",sig:"Revealed the underlying tensions between Western democracy and Soviet communism. Stalin agreed to free Polish elections (which never happened). Germany's division set the physical stage for the Cold War's Iron Curtain.",def:"Feb 1945 summit of FDR, Churchill, and Stalin. Divided postwar Germany into zones; Stalin promised Polish elections (which he ignored). Marked the transition from WWII alliance to Cold War rivalry."}
+];
+
+const mcQuestions = [
+  {q:"Which clause of the Treaty of Versailles forced Germany to accept sole blame for World War I?",opts:["League of Nations Charter","Kellogg-Briand Article","War Guilt Clause","Self-Determination Clause"],ans:2,explain:"Article 231, known as the War Guilt Clause, forced Germany to accept responsibility for WWI, obligating it to pay reparations. This caused immense resentment that fueled nationalist movements."},
+  {q:"What was the primary reason the United States never joined the League of Nations?",opts:["The Senate rejected membership due to isolationist sentiment","Woodrow Wilson opposed joining","The League refused US membership","The US was still fighting WWI"],ans:0,explain:"Despite Wilson proposing the League, the US Senate rejected membership. American isolationism — fear of foreign entanglements — meant the League's most powerful potential member never joined, fatally undermining it."},
+  {q:"The Molotov-Ribbentrop Pact was surprising because:",opts:["It was signed without France's knowledge","Germany and the Soviet Union were ideological enemies — fascism vs communism","The Soviet Union had already invaded Poland","Britain refused to sign a similar deal"],ans:1,explain:"Nazi Germany's foundational ideology included virulent anti-communism, and the Soviet Union was communism's home. Their non-aggression pact shocked the world precisely because their ideologies were supposed to make them mortal enemies."},
+  {q:"What was the key strategic error Hitler made during the Battle of Britain?",opts:["Invading too early in the summer","Sending ground troops instead of air forces","Shifting bombing targets from RAF airfields to London civilian areas","Using outdated aircraft against British radar"],ans:2,explain:"After a minor British bombing of Berlin, Hitler ordered the Luftwaffe to shift from attacking RAF airfields (which was working) to bombing London civilians. This allowed the RAF to recover and ultimately win the battle."},
+  {q:"Why did Stalin view Operation Torch (North Africa) as inadequate?",opts:["He wanted the Allies to invade Japan first","He believed North Africa was a German trap","It wasn't the Western European front he demanded to divert German forces from the USSR","He thought the Allies should have invaded Italy instead"],ans:2,explain:"Stalin had been demanding a second front in Western Europe since 1942 to force Germany to split its forces. North Africa diverted few German troops from the brutal Eastern Front where the Soviets were suffering catastrophic losses."},
+  {q:"What made the Battle of Midway a turning point in the Pacific War?",opts:["The US sank Japan's four largest aircraft carriers","Japan surrendered after the battle","The US captured a key Japanese island","Britain joined the Pacific theater after Midway"],ans:0,explain:"Aircraft carriers were the decisive naval weapon of WWII. The US sinking four of Japan's carriers — thanks to broken codes — permanently destroyed Japan's offensive naval capability. Japan never recovered this loss."},
+  {q:"The Dawes Plan (1924) created what economic problem?",opts:["It caused severe German hyperinflation","It created a fragile circular debt cycle entirely dependent on US loans","It led France and Britain to demand higher reparations","It forced Germany to give up additional territory"],ans:1,explain:"The Dawes Plan set up US loans → German reparations → Allied war debt repayment to US. When US banks collapsed in 1929, the entire cycle broke simultaneously, transmitting the Depression to Europe instantly."},
+  {q:"Which technology gave Britain a crucial advantage in the Battle of Britain?",opts:["Superior aircraft engines","Nuclear deterrence","Radar early warning systems","Encrypted radio communications only"],ans:2,explain:"Britain's advanced radar network provided early warning of German raids, allowing the RAF to conserve its fighter planes and intercept bombers efficiently rather than keeping planes constantly in the air. Combined with code-breaking, it was decisive."},
+  {q:"What was Japan's 'Greater East Asia Co-Prosperity Sphere'?",opts:["A trade agreement with China and Korea","An ideology justifying Japanese imperial expansion as 'liberating' Asia from Western colonialism","A defensive military alliance against the Soviet Union","A cultural exchange program between Asian nations"],ans:1,explain:"It was imperial ideology — Japan claimed to be liberating Asia from European colonialism while actually establishing its own brutal dominance. The need for resources (especially oil) under this expansion ultimately led to Pearl Harbor."},
+  {q:"What was the significance of the Yalta Conference for the Cold War?",opts:["It was where the US and USSR first became allies","It revealed deep tensions — Stalin agreed to free Polish elections that he never held","It established the United Nations as the postwar peacekeeping body","Germany's surrender was formalized there"],ans:1,explain:"Yalta revealed that the Allied partnership was fracturing. Stalin's agreement to free Polish elections — which he subsequently ignored as Soviet forces installed communist governments — showed the ideological conflict that would become the Cold War."},
+  {q:"Operation Barbarossa failed largely because of:",opts:["British air attacks on German supply lines","American troops defending Moscow","Underestimating Soviet resilience, Russian winter, and overextended supply lines","Germany's inability to produce enough tanks"],ans:2,explain:"Hitler expected a swift victory in weeks. Instead, Soviet scorched-earth tactics, extreme winter weather (German troops lacked winter gear), and supply lines stretching thousands of miles all contributed to the German army's stalling and eventual defeat at Stalingrad."},
+  {q:"What lesson does the policy of appeasement teach about dealing with aggressive states?",opts:["Economic concessions can prevent military conflict","Making territorial concessions to aggressors typically emboldens rather than satisfies them","Military pressure is always more effective than diplomacy","Democracies should avoid engaging with authoritarian governments"],ans:1,explain:"Hitler's behavior proved that each concession (Rhineland, Austria, Sudetenland) simply led to larger demands. The Munich Agreement, meant to ensure 'peace for our time,' was followed immediately by the occupation of all Czechoslovakia, then Poland."},
+];
+
+const essayPrompts = [
+  {num:1, short:"Treaty of Versailles & WWII", prompt:"Is the Treaty of Versailles the primary cause of WWII? Is it fair to characterize WWII as a continuation of WWI, only briefly interrupted by a flawed peace?", tips:"Argue that ToV was necessary but not sufficient — the Great Depression was the real accelerant. Use: War Guilt Clause, reparations, hyperinflation, Great Depression, fascism rise, Hitler."},
+  {num:2, short:"Rise of Fascism & Communism", prompt:"What conditions allowed for the rise of new political ideologies — fascism and communism — during the interwar period? Define each, and explain their progression in specific regions 1914–1945.", tips:"Define both clearly. For fascism: Italy (Mussolini 1922) + Germany (Hitler 1933). For communism: USSR (Lenin→Stalin, Five-Year Plans). Conditions: Depression, resentment of ToV, weak democracies."},
+  {num:3, short:"Appeasement & Ukraine", prompt:"Should the US push for a negotiated peace in Ukraine that includes territorial concessions? Are references to the failure of 'appeasement' during WWII applicable to the current conflict?", tips:"Must engage with both historical and modern. Analyze: Munich Agreement, Hitler's escalation pattern. Then compare/contrast with Russia-Ukraine. What are the stakes of concession vs. escalation?"},
+  {num:4, short:"Foundations of the Cold War", prompt:"How are the foundations of the Cold War rooted in events during WWII?", tips:"Key events: Molotov-Ribbentrop Pact (distrust), delayed Second Front (Stalin's resentment), atomic bomb (US kept USSR out of Manhattan Project), Yalta Conference (Poland, division of Germany)."},
+  {num:5, short:"Lessons for Today's Leaders", prompt:"Considering the costs of WWII (human life, monetarily, societally), what lessons (at least three) should contemporary political leaders take from the conflict? Is it reasonable to compare conditions then to today?", tips:"3 clear lessons: (1) Don't appease aggressors, (2) Economic stability prevents extremism (Depression → fascism), (3) Strong international institutions matter (League of Nations failed, UN was an improvement). Be specific with evidence."}
+];
+
+// ── GAME STATE ─────────────────────────────────────────────────────────────────
+let fcIndex = 0, fcDeck = [], fcFlipped = false;
+let mcIndex = 0, mcDeck = [], mcAnswered = false;
+let idIndex = 0, idDeck = [];
+let currentEssayIndex = 0;
+
+// ── XP / LEVEL ─────────────────────────────────────────────────────────────────
+function addXP(amount, label) {
+  xp += amount;
+  streak++;
+  correct++;
+  const newLevel = Math.floor(xp / XP_PER_LEVEL) + 1;
+  if (newLevel > level) { level = newLevel; toast(`🏅 LEVEL ${level} UNLOCKED!`); postScore(); }
+  updateStats();
+  if (label) toast(`+${amount} XP — ${label}`);
+}
+
+function updateStats() {
+  document.getElementById('xp-display').textContent = xp;
+  document.getElementById('streak-display').textContent = streak;
+  document.getElementById('correct-display').textContent = correct;
+  document.getElementById('level-display').textContent = level;
+  const levelXP = xp % XP_PER_LEVEL;
+  document.getElementById('xp-bar').style.width = (levelXP / XP_PER_LEVEL * 100) + '%';
+  document.getElementById('level-label').textContent = `LEVEL ${level}`;
+  document.getElementById('xp-to-next').textContent = `${levelXP} / ${XP_PER_LEVEL} XP`;
+}
+
+function toast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const isHome = id === 'screen-home';
+  document.getElementById('back-btn').style.display = isHome ? 'none' : '';
+  if (id === 'screen-leaderboard') loadLeaderboard();
+}
+
+function goHome() { showScreen('screen-home'); }
+
+// ── FLASHCARD MODE ─────────────────────────────────────────────────────────────
+function startMode(mode) {
+  if (mode === 'flashcard') {
+    fcDeck = shuffle([...terms]);
+    fcIndex = 0;
+    showScreen('screen-flashcard');
+    renderFC();
+  } else if (mode === 'mc') {
+    mcDeck = shuffle([...mcQuestions]);
+    mcIndex = 0;
+    mcAnswered = false;
+    showScreen('screen-mc');
+    renderMC();
+  } else if (mode === 'id') {
+    idDeck = shuffle([...terms]);
+    idIndex = 0;
+    showScreen('screen-id');
+    renderID();
+  } else if (mode === 'essay') {
+    showScreen('screen-essay-pick');
+    renderEssayPick();
+  }
+}
+
+function renderFC() {
+  if (fcIndex >= fcDeck.length) {
+    toast('🎉 All flashcards done!');
+    goHome(); return;
+  }
+  const t = fcDeck[fcIndex];
+  document.getElementById('fc-term-text').textContent = t.term;
+  document.getElementById('fc-def-text').textContent = t.def;
+  document.getElementById('fc-inner').classList.remove('flipped');
+  document.getElementById('fc-grade-row').style.display = 'none';
+  document.getElementById('fc-counter').textContent = `${fcIndex + 1} / ${fcDeck.length}`;
+  fcFlipped = false;
+  // progress dots
+  const prog = document.getElementById('fc-progress');
+  prog.innerHTML = '';
+  for (let i = 0; i < Math.min(fcDeck.length, 25); i++) {
+    const d = document.createElement('div');
+    d.className = 'q-dot' + (i < fcIndex ? ' done' : i === fcIndex ? ' current' : '');
+    prog.appendChild(d);
+  }
+}
+
+function flipCard() {
+  if (fcFlipped) return;
+  document.getElementById('fc-inner').classList.add('flipped');
+  document.getElementById('fc-grade-row').style.display = 'flex';
+  fcFlipped = true;
+}
+
+function gradeFlash(g) {
+  if (g === 'easy') { addXP(10, 'Got it!'); }
+  else { streak = Math.max(0, streak - 1); updateStats(); toast('Moved to review pile'); }
+  fcIndex++;
+  renderFC();
+}
+
+// ── MULTIPLE CHOICE ────────────────────────────────────────────────────────────
+function renderMC() {
+  if (mcIndex >= mcDeck.length) { toast('🎉 MC complete!'); goHome(); return; }
+  const q = mcDeck[mcIndex];
+  mcAnswered = false;
+  document.getElementById('mc-question').textContent = q.q;
+  document.getElementById('mc-label').textContent = `QUESTION ${mcIndex + 1} OF ${mcDeck.length}`;
+  document.getElementById('mc-feedback').classList.remove('show');
+  document.getElementById('mc-next-btn').style.display = 'none';
+  // progress
+  const prog = document.getElementById('mc-progress');
+  prog.innerHTML = '';
+  for (let i = 0; i < mcDeck.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'q-dot' + (i < mcIndex ? ' done' : i === mcIndex ? ' current' : '');
+    prog.appendChild(d);
+  }
+  const opts = document.getElementById('mc-options');
+  opts.innerHTML = '';
+  q.opts.forEach((o, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'mc-option';
+    btn.textContent = o;
+    btn.onclick = () => answerMC(i);
+    opts.appendChild(btn);
+  });
+}
+
+function answerMC(idx) {
+  if (mcAnswered) return;
+  mcAnswered = true;
+  const q = mcDeck[mcIndex];
+  const opts = document.querySelectorAll('.mc-option');
+  opts.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.ans) b.classList.add('correct');
+    else if (i === idx && i !== q.ans) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('mc-feedback');
+  document.getElementById('mc-explain').textContent = q.explain;
+  fb.classList.add('show');
+  document.getElementById('mc-next-btn').style.display = '';
+  if (idx === q.ans) { addXP(20, 'Correct!'); }
+  else { streak = 0; updateStats(); toast('❌ Incorrect — read the explanation'); }
+}
+
+function nextMC() { mcIndex++; renderMC(); }
+
+// ── TERM ID ────────────────────────────────────────────────────────────────────
+function renderID() {
+  if (idIndex >= idDeck.length) { toast('🎉 All IDs done!'); goHome(); return; }
+  const t = idDeck[idIndex];
+  document.getElementById('id-term').textContent = t.term;
+  ['who','what','when','where','sig'].forEach(f => {
+    const el = document.getElementById('id-' + f);
+    el.value = '';
+    el.disabled = false;
+  });
+  document.getElementById('id-feedback').classList.remove('show');
+  document.getElementById('id-next-row').style.display = 'none';
+  document.getElementById('id-submit-btn').style.display = '';
+  document.getElementById('id-submit-btn').disabled = false;
+}
+
+async function submitID() {
+  const t = idDeck[idIndex];
+  const who = document.getElementById('id-who').value.trim();
+  const what = document.getElementById('id-what').value.trim();
+  const when = document.getElementById('id-when').value.trim();
+  const where = document.getElementById('id-where').value.trim();
+  const sig = document.getElementById('id-sig').value.trim();
+  if (!who && !what && !sig) { toast('Fill in at least a few fields!'); return; }
+
+  document.getElementById('id-submit-btn').disabled = true;
+  document.getElementById('id-submit-btn').textContent = 'Grading...';
+  const fb = document.getElementById('id-feedback');
+  document.getElementById('id-feedback-text').innerHTML = '<span class="loading-dots">Grading your answer</span>';
+  document.getElementById('id-score-badge').textContent = '';
+  fb.classList.add('show');
+
+  const prompt = `You are a strict but helpful history teacher grading a student's Term Identification answer for a World War II exam. 
+
+TERM: ${t.term}
+
+CORRECT ANSWER (for grading reference only, do not reveal directly):
+- Who: ${t.who}
+- What: ${t.what}
+- When: ${t.when}
+- Where: ${t.where}
+- Significance: ${t.sig}
+
+STUDENT'S ANSWER:
+- Who: ${who || "(blank)"}
+- What: ${what || "(blank)"}
+- When: ${when || "(blank)"}
+- Where: ${where || "(blank)"}
+- Significance/Why it matters: ${sig || "(blank)"}
+
+Grade this response on a scale of A/B/C/D. The significance section should count for 40% of the grade. Be specific about what was good, what was missing, and what the student MUST remember for the exam. Keep feedback to 3-4 sentences. Start with the letter grade on its own line like "GRADE: B", then give feedback.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content[0].text;
+    const gradeMatch = text.match(/GRADE:\s*([ABCD])/i);
+    const grade = gradeMatch ? gradeMatch[1].toUpperCase() : 'C';
+    const feedback = text.replace(/GRADE:\s*[ABCD]\+?\n?/i, '').trim();
+    const badge = document.getElementById('id-score-badge');
+    badge.textContent = grade;
+    badge.className = 'score-badge score-' + grade.toLowerCase();
+    document.getElementById('id-feedback-text').textContent = feedback;
+    if (grade === 'A') addXP(50, 'Perfect ID!');
+    else if (grade === 'B') addXP(35, 'Good ID');
+    else if (grade === 'C') addXP(20, 'Partial credit');
+    else { streak = 0; updateStats(); addXP(5, 'Keep practicing'); }
+  } catch(e) {
+    document.getElementById('id-feedback-text').textContent = 'Could not connect to AI grader. Check your answer against the notes and grade yourself.';
+  }
+  document.getElementById('id-submit-btn').style.display = 'none';
+  document.getElementById('id-next-row').style.display = '';
+}
+
+function nextID() { idIndex++; renderID(); }
+
+// ── ESSAY MODE ─────────────────────────────────────────────────────────────────
+function renderEssayPick() {
+  const list = document.getElementById('essay-options-list');
+  list.innerHTML = '';
+  essayPrompts.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'essay-option';
+    btn.innerHTML = `<strong>PROMPT ${p.num}</strong>${p.prompt}`;
+    btn.onclick = () => startEssay(i);
+    list.appendChild(btn);
+  });
+}
+
+function startEssay(idx) {
+  currentEssayIndex = idx;
+  const p = essayPrompts[idx];
+  document.getElementById('essay-prompt-text').textContent = p.prompt;
+  ['thesis','p1','p2','p3','conc'].forEach(f => {
+    document.getElementById('essay-' + f).value = '';
+  });
+  document.getElementById('essay-feedback').classList.remove('show');
+  document.getElementById('essay-next-row').style.display = 'none';
+  document.getElementById('essay-submit-btn').style.display = '';
+  document.getElementById('essay-submit-btn').disabled = false;
+  showScreen('screen-essay-write');
+}
+
+async function submitEssay() {
+  const p = essayPrompts[currentEssayIndex];
+  const thesis = document.getElementById('essay-thesis').value.trim();
+  const p1 = document.getElementById('essay-p1').value.trim();
+  const p2 = document.getElementById('essay-p2').value.trim();
+  const p3 = document.getElementById('essay-p3').value.trim();
+  const conc = document.getElementById('essay-conc').value.trim();
+  if (!thesis) { toast('Write a thesis first!'); return; }
+
+  document.getElementById('essay-submit-btn').disabled = true;
+  document.getElementById('essay-submit-btn').textContent = 'Getting feedback...';
+  const fb = document.getElementById('essay-feedback');
+  document.getElementById('essay-feedback-text').innerHTML = '<span class="loading-dots">Analyzing your outline</span>';
+  document.getElementById('essay-score-badge').textContent = '';
+  fb.classList.add('show');
+
+  const prompt = `You are a history teacher coaching a high school student on essay writing for a WWII unit exam. The exam prompt is:
+
+"${p.prompt}"
+
+Grader notes: ${p.tips}
+
+STUDENT'S OUTLINE:
+Thesis: ${thesis || "(blank)"}
+Body Paragraph 1: ${p1 || "(blank)"}
+Body Paragraph 2: ${p2 || "(blank)"}
+Body Paragraph 3: ${p3 || "(blank)"}
+Conclusion: ${conc || "(blank)"}
+
+Give the student a letter grade (A/B/C/D) on the FIRST LINE as "GRADE: X", then provide specific, actionable feedback in 4-5 sentences. Focus on: (1) Is the thesis specific and arguable? (2) Is there concrete historical evidence (key terms, events)? (3) Does the argument address all parts of the prompt? Be encouraging but honest. End with one specific thing they should add or change to improve their grade.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content[0].text;
+    const gradeMatch = text.match(/GRADE:\s*([ABCD])/i);
+    const grade = gradeMatch ? gradeMatch[1].toUpperCase() : 'B';
+    const feedback = text.replace(/GRADE:\s*[ABCD]\+?\n?/i, '').trim();
+    const badge = document.getElementById('essay-score-badge');
+    badge.textContent = grade;
+    badge.className = 'score-badge score-' + grade.toLowerCase();
+    document.getElementById('essay-feedback-text').textContent = feedback;
+    if (grade === 'A') addXP(100, 'Essay ace!');
+    else if (grade === 'B') addXP(70, 'Strong essay');
+    else if (grade === 'C') addXP(40, 'Developing');
+    else addXP(15, 'Keep working on it');
+  } catch(e) {
+    document.getElementById('essay-feedback-text').textContent = 'AI feedback unavailable. Review your thesis — is it specific and arguable? Does each paragraph have concrete evidence?';
+  }
+  document.getElementById('essay-submit-btn').style.display = 'none';
+  document.getElementById('essay-next-row').style.display = '';
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+updateStats();
+</script>
+</body>
+</html>
